@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 import sys
 from getopt import getopt, GetoptError
+import xmlrpclib
 
 from clint import piped_in
 from clint.textui import puts, columns, indent
@@ -36,6 +37,10 @@ def usage(error=False):
         for option, description in options:
             puts(columns([option, max_len + 5], [description, 99]), stream=out)
 
+def get_pypi_user_packages(user):
+    client = xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
+    return [x[1] for x in client.user_packages(user)]
+
 
 def process_options(options):
     """Returns given package names or prints help, version, or usage info"""
@@ -50,6 +55,9 @@ def process_options(options):
         if option == '-r':
             with open(arg) as f:
                 packages += get_pypi_packages(f)
+        if option == '-u':
+            packages += get_pypi_user_packages(arg)
+
     return packages
 
 
@@ -60,7 +68,7 @@ def main():
     input_lines = None and piped_in()
 
     try:
-        opts, pkgs = getopt(args, "vhr:", ["version", "help", "requirement"])
+        opts, pkgs = getopt(args, "vhr:u:", ["version", "help", "requirement", "user"])
     except GetoptError as e:
         puts(str(e), stream=STDERR)
         usage(error=True)
