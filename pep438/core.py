@@ -16,8 +16,14 @@ def valid_package(package_name):
 
 def get_links(package_name):
     """Return list of links on package's PyPI page"""
-    response = requests.get('https://pypi.python.org/simple/%s' % package_name)
-    response.raise_for_status()
+    try:
+        response = requests.get('https://pypi.python.org/simple/%s' % package_name)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        # A package without releases can cause a 404 error when URL scraping
+        # is on.
+        return []
+
     page = lxml.html.fromstring(response.content)
     external_links = [link for link in page.xpath('//a')
                       if not link.get('href').startswith('../')]
